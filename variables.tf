@@ -7,12 +7,16 @@ variable "aws_region" {
 variable "bucket_name" {
   description = "S3 bucket name (must be globally unique)"
   type        = string
-  default     = "cloudforge-bucket-festus-2026"
+
+  # safer naming pattern for production
+  default     = "cloudforge-tfstate-festus-2026"
 }
 
 variable "ami_id" {
-  description = "AMI ID for EC2 instance (Amazon Linux 2)"
+  description = "Ubuntu AMI ID for EC2 instance"
   type        = string
+
+  # Ubuntu 22.04 LTS (safe default for Docker + DevOps)
   default     = "ami-0c02fb55956c7d316"
 }
 

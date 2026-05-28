@@ -1,18 +1,5 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
-provider "aws" {
-  region = var.aws_region
-}
-
 # ─────────────────────────────
-# VPC (FIX FOR STABILITY)
+# VPC (DEFAULT)
 # ─────────────────────────────
 data "aws_vpc" "default" {
   default = true
@@ -40,13 +27,12 @@ resource "aws_s3_bucket_versioning" "app_bucket_versioning" {
 }
 
 # ─────────────────────────────
-# SECURITY GROUP (FIXED)
+# SECURITY GROUP
 # ─────────────────────────────
 resource "aws_security_group" "app_sg" {
   name        = "cloudforge-sg"
   description = "Allow SSH, HTTP, and App traffic"
-
-  vpc_id = data.aws_vpc.default.id
+  vpc_id      = data.aws_vpc.default.id
 
   ingress {
     description = "SSH"
