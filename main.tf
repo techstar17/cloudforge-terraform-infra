@@ -1,8 +1,26 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
 provider "aws" {
   region = var.aws_region
 }
 
-# ─── S3 BUCKET ─────────────────────────────
+# ─────────────────────────────
+# VPC (FIX FOR STABILITY)
+# ─────────────────────────────
+data "aws_vpc" "default" {
+  default = true
+}
+
+# ─────────────────────────────
+# S3 BUCKET
+# ─────────────────────────────
 resource "aws_s3_bucket" "app_bucket" {
   bucket = var.bucket_name
 
@@ -21,12 +39,17 @@ resource "aws_s3_bucket_versioning" "app_bucket_versioning" {
   }
 }
 
-# ─── SECURITY GROUP ────────────────────────
+# ─────────────────────────────
+# SECURITY GROUP (FIXED)
+# ─────────────────────────────
 resource "aws_security_group" "app_sg" {
   name        = "cloudforge-sg"
   description = "Allow SSH, HTTP, and App traffic"
 
+  vpc_id = data.aws_vpc.default.id
+
   ingress {
+    description = "SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -34,6 +57,7 @@ resource "aws_security_group" "app_sg" {
   }
 
   ingress {
+    description = "HTTP"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -41,6 +65,7 @@ resource "aws_security_group" "app_sg" {
   }
 
   ingress {
+    description = "App Port"
     from_port   = 3000
     to_port     = 3000
     protocol    = "tcp"
@@ -59,7 +84,17 @@ resource "aws_security_group" "app_sg" {
   }
 }
 
-# ─── EC2 INSTANCE ──────────────────────────
+# ─────────────────────────────
+# KEY PAIR
+# ─────────────────────────────
+resource "aws_key_pair" "app_key" {
+  key_name   = "cloudforge-key"
+  public_key = file(var.public_key_path)
+}
+
+# ─────────────────────────────
+# EC2 INSTANCE
+# ─────────────────────────────
 resource "aws_instance" "app_server" {
   ami           = var.ami_id
   instance_type = var.instance_type
@@ -74,10 +109,4 @@ resource "aws_instance" "app_server" {
     Environment = "Dev"
     Project     = "terraform-aws-infra"
   }
-}
-
-# ─── KEY PAIR ──────────────────────────────
-resource "aws_key_pair" "app_key" {
-  key_name   = "cloudforge-key"
-  public_key = file(var.public_key_path)
 }
